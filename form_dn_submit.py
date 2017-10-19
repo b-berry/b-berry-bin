@@ -44,9 +44,7 @@ def main():
     if not names:
         parser.error("author %s format not found" %options.author)
     else:
-        print 'success: %s' %names
-
-    get_form(options,names)
+        get_form(options,names)
 
 def get_form(options,names):
     
