@@ -52,7 +52,7 @@ def get_form(options,names):
     
     name = "%s %s" %names[0] names[1]
     data = urllib.urlencode({'contact[name]': name },
-                            {'contact[email]': names[3] },
+                            {'contact[email]': names[2] },
                             {'contact[to]': options.subkey },
                             {'contact[message]': options.message })
     full_url = options.url + '?' + data
