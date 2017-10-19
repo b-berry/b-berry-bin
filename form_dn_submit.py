@@ -16,7 +16,7 @@ sys.setdefaultencoding('utf8')
 
 def main():
 
-    requiredOpts="author,url".split(',')
+    requiredOpts="author,message".split(',')
 
     parser = OptionParser()
     parser.add_option("-u", "--url", dest="url",
