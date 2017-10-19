@@ -1,5 +1,6 @@
 #!/usr/bin/python
 
+#import mechanize
 import re
 import sys
 import urllib
@@ -62,6 +63,42 @@ def get_form(options,names):
      
     webbrowser.open("form_dn_results.html") 
  
+#def get_form_mechanize(url):
+#
+#    # Set browser
+#    br = mechanize.Browser()
+#    br.set_handle_robots(False)
+#    br.addheaders = [('User-agent', 'Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9.0.1) Gecko/2008071615 Fedora/3.0.1-1.fc9 Firefox/3.0.1')]
+#
+#    r = br.open(url)
+#    html = r.read()
+#    title = br.title()
+#
+#    # Sample from ipython
+#    #In [24]: br.title()
+#    #u'Contact Us | Democracy Now!'
+#    #In [25]: for f in br.forms():
+#    #    print f
+#    #   ....:     
+#    #<get https://www.democracynow.org/search application/x-www-form-urlencoded
+#    #  <TextControl(query=)>>
+#    #<post https://www.democracynow.org/contact/send_contact_email application/x-www-form-urlencoded
+#    #  <HiddenControl(authenticity_token=i/IhBSNpD7ztyu9mlkBbv5xHfliQK2+bhqMjW/WYnP4=) (readonly)>
+#    #  <TextControl(contact[name]=)>
+#    #  <TextControl(contact[email]=)>
+#    #  <SelectControl(contact[to]=[*, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65])>
+#    #  <TextControl(contact[user_subject]=)>
+#    #  <TextareaControl(contact[message]=)>
+#    #  <TextControl(hobby=)>
+#    #  <SubmitControl(commit=Send message) (readonly)>>
+#    #<post https://www.democracynow.org/subscribe application/x-www-form-urlencoded
+#    #  <HiddenControl(authenticity_token=i/IhBSNpD7ztyu9mlkBbv5xHfliQK2+bhqMjW/WYnP4=) (readonly)>
+#    #  <TextControl(subscriber[email]=)>
+#    #  <TextControl(hobby=)>
+#    #  <SubmitControl(commit=subscribe) (readonly)>>
+
+#    print title
+
 def process_author(author):
 
     # Define format
