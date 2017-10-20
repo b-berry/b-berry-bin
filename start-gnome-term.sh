@@ -79,7 +79,7 @@ function report_error {
 function start_term {
 
     echo "Starting terminal: $1"
-    gnome-terminal --profile=${PROFILE} --geometry=${GEOMETRY} -- tmux att -t $1:1
+    gnome-terminal --profile=${PROFILE} --geometry=${GEOMETRY} --hide-menubar -- tmux att -t $1:1
 
 }
 
