@@ -23,6 +23,8 @@ def main():
         default='https://www.democracynow.org/contact/send_contact_email', help="url to submit FORM")
     parser.add_option("-a","--author", dest="author",
         default=False, help="author in \"Name <email>\" format")
+    parser.add_option("-f", "--file", dest="mfile",
+        default=False, help="file containing message to submit FORM")
     parser.add_option("-k", "--subkey", dest="subkey",
         default=52, help=("subject key "
                           "default: 52:Music submissions"))
@@ -46,8 +48,14 @@ def main():
         get_form(options,names)
 
 def get_form(options,names):
-    
-    name = "%s %s" %names[0] names[1]
+
+    # Handle message type
+    if options.mfile:
+        message = get_message(options.mfile)
+    else:
+        message = options.message
+
+    name = "%s %s" %names[0], names[1]
     data = urllib.urlencode({'contact[name]': name },
                             {'contact[email]': names[2] },
                             {'contact[to]': options.subkey },
@@ -59,7 +67,16 @@ def get_form(options,names):
         f.write(response.read())
      
     webbrowser.open("form_dn_results.html") 
- 
+
+def get_message(mfile):
+
+    try:
+        with open(mfile,'w') as m:
+            data = m.read()
+            return data
+    except FileNotFoundError:
+        exit(1)
+
 def process_author(author):
 
     # Define format
