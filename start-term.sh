@@ -1,6 +1,7 @@
 #!/bin/bash
 
-GEOMETRY='155x45+88+68'
+GEOMETRY_G='155x45+88+68'
+GEOMETRY_X='155x45+35+50'
 PROFILE='default'
 SESS='desktop'
 
@@ -76,15 +77,45 @@ function report_error {
 
 }
 
-function start_term {
+function start_gnome_term {
 
     echo "Starting terminal: $1"
-    gnome-terminal --profile=${PROFILE} --geometry=${GEOMETRY} --hide-menubar -- tmux att -t $1:1
+    gnome-terminal --profile=${PROFILE} --geometry=${GEOMETRY_G} -- tmux att -t $1:1
 
 }
 
+function start_x_term {
+
+    echo "Starting terminal: $1"
+    xfce4-terminal --geometry=${GEOMETRY_X} --hide-menubar --hide-toolbar -e "tmux att -t  $1:1"
+
+}
+
+function usage {
+
+    echo "Usage: start_term.sh OPT"
+    echo "       OPT: {-g,--gnome,-x,--xorg}"
+
+}
+
+
 # Execute
-echo "Getting tmux"
-get_tmux $SESS
-echo "Starting term"
-start_term $SESS
+if [ -z $1 ]; then
+    usage
+else
+    # Start term in proper env
+    case $1 in
+    -g|--gnome)
+        echo "Getting tmux"
+        get_tmux $SESS
+        start_gnome_term $SESS
+         ;;
+    -x|--xorg)
+        echo "Getting tmux"
+        get_tmux $SESS
+        start_x_term $SESS
+        ;;
+    *)  usage
+        ;;
+    esac
+fi
