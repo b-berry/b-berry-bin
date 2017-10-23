@@ -54,6 +54,21 @@ function build_tmux {
     report_error $STATUS
 }
 
+function get_env {
+
+    unset E_STATUS
+    printf 'Detecting WM Env: '
+    if [[ ( ! -z $XDG_CURRENT_DESKTOP ) || ( ! -z $GDMSESSION ) ]]; then
+        printf 'OK\n  Desktop: %s\n  Session: %s\n' "$XDG_CURRENT_DESKTOP" "$GDMSESSION"
+        E_STATUS=0
+        return 
+    else
+        printf 'ERROR'
+        E_STATUS=1
+    fi
+
+}
+
 function get_tmux {
 
     # Set up or join exiting tmux env
@@ -101,7 +116,13 @@ function usage {
 
 # Execute
 if [ -z $1 ]; then
-    usage
+    # Attempt Auto WM detection
+    get_env
+    if [ $E_STATUS -gt 0 ]; then
+        usage
+    else
+        # Call proper ENV term fuction here
+    fi
 else
     # Start term in proper env
     case $1 in
