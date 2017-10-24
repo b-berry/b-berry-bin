@@ -61,6 +61,7 @@ function get_env {
     if [[ ( ! -z $XDG_CURRENT_DESKTOP ) || ( ! -z $GDMSESSION ) ]]; then
         printf 'OK\n  Desktop: %s\n  Session: %s\n' "$XDG_CURRENT_DESKTOP" "$GDMSESSION"
         E_STATUS=0
+        WM=$GDMSESSION
         return 
     else
         printf 'ERROR'
@@ -79,7 +80,7 @@ function get_tmux {
        echo "No tmux:$1 found... initiating"
        build_tmux $1
     else
-       echo "Found exiting tmux: $1" 
+       echo "Found existing tmux: $1" 
        return       
     fi 
 
@@ -119,9 +120,20 @@ if [ -z $1 ]; then
     # Attempt Auto WM detection
     get_env
     if [ $E_STATUS -gt 0 ]; then
+        echo "Unable to determine WM Env.  Please specify."
         usage
     else
-        # Call proper ENV term fuction here
+
+        get_tmux $SESS 
+
+        case $WM in
+        gnome)
+            start_gnome_term $SESS
+            ;;
+        xorg)
+            start_x_term $SESS
+            ;;
+        esac
     fi
 else
     # Start term in proper env
