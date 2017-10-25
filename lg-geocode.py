@@ -4,13 +4,22 @@ import geocoder
 import sys
 from optparse import OptionParser
 
+# Requirements:
+#   geocoder
+#   pygeoif
+#   pytz
+
 def main():
 
     parser = OptionParser()
     parser.add_option("-q", "--quick", dest="quick",
         action="callback", callback=vararg_callback,
         default=False, help="Run quick geocode operation. ie Provide string queries as args")
-
+    parser.add_option("-p", "--placemark", dest="place",
+        action="callback", callback=vararg_callback,
+        default=False, help="Run geocode operation and output KML:Placemarks")
+    parser.add_option("-w", "--write", dest="write",
+        default=False, help="Write results to FILE")
     (options, args) = parser.parse_args()
 
     #print options
@@ -19,32 +28,34 @@ def main():
     if options.quick:
         quick(sys.argv)
 
+def googleAPI(query):
+
+    try:
+        g = geocoder.google(query)
+        return g.geojson
+    except:
+        print 'Geocode lookup on query: %s FAIL' %query
+        exit(2)
+
 def quick(args):
 
-        if len(args) < 1:
-            print 'Please specify a lookup query'
-            print '  ex: \'Seattle, WA'
-            exit(1)
-        else:
-            for query in args:
-                if query == args[0] or query == '-q':
-                    next
-                else:
-                    try:
-                        # Try LookUp
-                        g = geocoder.google(query).geojson
-                    except:
-                        print 'Geocode lookup on query: %s FAIL' %query
-                        exit(2)
-
-                    # Print Results
-                    address = g['features'][0]['properties']['address']
-                    coord = g['features'][0]['geometry']['coordinates']
-                    print ('Query: %s'
-                           '\n\tAddress: %s'
-                           '\n\tLongitude: %s'
-                           '\n\tLatitude: %s' %(query,address,coord[0],coord[1])
-                          )
+    try:
+        for query in args:
+            if query == args[0] or query == '-q':
+                next
+            else:
+                g = googleAPI(query)
+                # Print Results
+                address = g['features'][0]['properties']['address']
+                coord = g['features'][0]['geometry']['coordinates']
+                print ('Query: %s'
+                       '\n\tAddress: %s'
+                       '\n\tLongitude: %s'
+                       '\n\tLatitude: %s' %(query,address,coord[0],coord[1])
+                      )
+    except ValueError:
+        print 'Error: queries not iterable as given'
+        exit(1)
 
 def vararg_callback(option, opt_str, value, parser):
     assert value is None
