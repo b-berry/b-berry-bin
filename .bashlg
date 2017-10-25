@@ -1,0 +1,23 @@
+#!/bin/bash
+
+# Find first pub key
+for FILE in $HOME/.ssh/*; do
+  if [[ $FILE == *"_rsa.pub"* ]]; then
+      SSH_KEY=$(basename $FILE) &&\
+      export LG_SSH_KEY="$HOME/.ssh/${SSH_KEY}" &&\
+      break
+  fi
+done
+
+# LG Configs
+LG_CHEF_DIR="$HOME/src/lg-chef"
+if [ -d $LG_CHEF_DIR ]; then
+  export LG_SSH_LOG="$HOME/src/.lg-ssh.log"
+  alias lg-ssh="${LG_CHEF_DIR}/repo_scripts/lg-ssh"
+  alias lg-scp="${LG_CHEF_DIR}/repo_scripts/lg-scp"
+  alias gal-run="${LG_CHEF_DIR}/repo_scripts/gal-run"
+  # Set up tab completion
+  if [ -f ${LG_CHEF_DIR}/repo_scripts/lg-ssh.bash-completion ]; then
+   source ${LG_CHEF_DIR}/repo_scripts/lg-ssh.bash-completion
+  fi
+fi
