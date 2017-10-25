@@ -27,7 +27,7 @@ def quick(args):
             exit(1)
         else:
             for query in args:
-                if query == args[0]:
+                if query == args[0] or query == '-q':
                     next
                 else:
                     try:
@@ -40,7 +40,11 @@ def quick(args):
                     # Print Results
                     address = g['features'][0]['properties']['address']
                     coord = g['features'][0]['geometry']['coordinates']
-                    print 'Query: %s\n\tAddress: %s\n\tLongitude: %s\n\tLatitude: %s' %(query,address,coord[0],coord[1])
+                    print ('Query: %s'
+                           '\n\tAddress: %s'
+                           '\n\tLongitude: %s'
+                           '\n\tLatitude: %s' %(query,address,coord[0],coord[1])
+                          )
 
 def vararg_callback(option, opt_str, value, parser):
     assert value is None
