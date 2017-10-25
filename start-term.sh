@@ -20,7 +20,7 @@ function build_tmux {
 	    # Sort item type
         if [[ $INSTANCE == *":"* ]]; then
             NAME="${INSTANCE#*:}"
-            DIR=$(find $HOME/* -type d -name $NAME)
+            DIR=$(find $HOME/* -maxdepth 1 -type d -name $NAME)
             # Correct dir if not found
             if [ ! -d $DIR ]; then
                 DIR=$HOME
