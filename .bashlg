@@ -10,9 +10,10 @@ for FILE in $HOME/.ssh/*; do
 done
 
 # LG Configs
-LG_CHEF_DIR="$HOME/src/lg-chef"
+export LG_CHEF_DIR="$HOME/src/lg-chef"
 if [ -d $LG_CHEF_DIR ]; then
-  export LG_SSH_LOG="$HOME/src/.lg-ssh.log"
+  export LG_SSH_LOG="$HOME/.log/lg-ssh.log"
+  alias lg-cms="${LG_CHEF_DIR}/repo_scripts/lg-show-roscms-password"
   alias lg-ssh="${LG_CHEF_DIR}/repo_scripts/lg-ssh"
   alias lg-scp="${LG_CHEF_DIR}/repo_scripts/lg-scp"
   alias gal-run="${LG_CHEF_DIR}/repo_scripts/gal-run"
