@@ -4,3 +4,4 @@ geocoder >= 1.32.1
 lxml >= 4.1.0
 pygeoif >= 0.7
 pytz >= 2017.2
+Shapely >= 1.6.1
