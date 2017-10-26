@@ -1,5 +1,5 @@
 [Desktop Entry]
-Name=Start Gnome Terminal
+Name=Start Terminal Session
 Comment=Launch Gnome Terminal Env
 Icon=terminal
 Categories=Utility;
@@ -8,4 +8,4 @@ Hidden=false
 Terminal=false
 Version=1.0
 X-GNOME-Autostart-enabled=false
-Exec=/home/bryan/bin/start-gnome-term.sh
+Exec=/home/bryan/bin/start-term.sh
