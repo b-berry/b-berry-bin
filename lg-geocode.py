@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 import geocoder
+import re
 import simplekml
 import sys
 from optparse import OptionParser
@@ -17,6 +18,9 @@ def main():
     parser.add_option('-k', '--kml', dest='kml',
         action='callback', callback=vararg_callback,
         default=False, help='Run geocode operation and output KML')
+    parser.add_option('-i', '--inline', dest='inline',
+        default=False, action='store_true', help=('Combine queries as single ' 
+            'KML document'))
     # This OPT behavior needs work:
     parser.add_option('-l', '--lookat', nargs=3, dest='lookAt',
         default=default_view, action='store', help=('Generate KML:LookAt   '
@@ -24,8 +28,10 @@ def main():
     parser.add_option('-q', '--quick', dest='quick',
         action='callback', callback=vararg_callback,
         default=False, help='Run quick geocode operation. ie Provide string queries as args')
+    parser.add_option('-t', '--tour', dest='tour',
+        default=False, action='store_true', help='Generate KML:gx:Tour')
     parser.add_option('-w', '--write', dest='write',
-        default=False, metavar='FILE', help='Write results to FILE')
+        default=False, action='store_true', help='Write results to FILE')
     (options, args) = parser.parse_args()
 
     print options
@@ -33,20 +39,47 @@ def main():
 
     if options.quick:
         quick(sys.argv)
+        exit(0)
     if options.kml:
-        # Initiate KML Document
-        k = init_kml('Document')
-        # Create Folder
-        f = k.newfolder(name='Folder')
-        # Parse arg queries
-        for query in options.kml:
-            g = googleAPI(query)
-            address = g['features'][0]['properties']['address']
-            coord = g['features'][0]['geometry']['coordinates']
-            p = f.newpoint(name=query,coords=[(coord[0],coord[1],0.0)])
-            lookat_kml(p,options.lookAt)
-        # Print result KML
-        print_kml(k)
+        if options.inline:
+            # Build single KML File
+            print 'options.inline todo'
+            exit(0)
+        else:
+            # Parse arg queries
+            for query in options.kml:
+                # Initiate KML Document
+                k = init_kml('Document')
+                # Create Folder
+                f = k.newfolder(name='Folder')
+                p = make_point(k,f,query)
+                #import code; code.interact(local=dict(globals(), **locals()))
+                #name = re.sub('[^A-Za-z0-9]+', '-', address)
+                # What should I do with this point 'p'
+                place = p.__dict__['_placemark']
+                name = re.sub('[^A-Za-z0-9]+', '-',
+                    place.__dict__['_kml']['name'])
+                if options.lookAt and not options.tour:
+                    name = name + '-lookat'
+                    lookat_kml(p,options.lookAt)
+                elif options.tour:
+                    name = name + '-tour'
+                    gxt = init_kml_tour(k)
+                    # Attach a gx:Wait init to reduce problems
+                    w0 = gxt.newgxwait(gxduration=0.3)
+                    # Get user specified view
+                    if options.lookAt:
+                        view = options.lookAt
+                    else:
+                        view = default_view
+                    f = flyto_kml(gxt,p,view)
+                    wN = gxt.newgxwait(gxduration=2.0)
+                if options.write:
+                    write_kml(k,name)
+                else:
+                    # Print result KML
+                    print_kml(k)
+
 
 def init_kml(name):
 
@@ -55,22 +88,62 @@ def init_kml(name):
     k.document.name = name
     return k
 
-def lookat_kml(point,view):
+def flyto_kml(gtx,p,view):
 
-    point.lookat.altitudemode = 'absolute'
-    point.lookat.altitude = 0.0
-    point.lookat.latitude = point.coords.__dict__['_coords'][0][1] 
-    point.lookat.longitude = point.coords.__dict__['_coords'][0][0]
-    point.lookat.range = view[0]
-    point.lookat.heading = view[1]
-    point.lookat.tilt = view[2]
-    #import code; code.interact(local=dict(globals(), **locals()))
+    f = gtx.newgxflyto(gxduration=4)
+    f.lookat.altitudemode = 'absolute'
+    f.lookat.altitude = 0.0
+    f.lookat.latitude = p.coords.__dict__['_coords'][0][1] 
+    f.lookat.longitude = p.coords.__dict__['_coords'][0][0]
+    f.lookat.range = view[0]
+    f.lookat.heading = view[1]
+    f.lookat.tilt = view[2]
+    return f
 
-    return point
+def init_kml_tour(k):
+    
+    t = k.newgxtour(name='Play Me') 
+    return t.newgxplaylist()
+
+def lookat_kml(p,view):
+
+    p.lookat.altitudemode = 'absolute'
+    p.lookat.altitude = 0.0
+    p.lookat.latitude = p.coords.__dict__['_coords'][0][1] 
+    p.lookat.longitude = p.coords.__dict__['_coords'][0][0]
+    p.lookat.range = view[0]
+    p.lookat.heading = view[1]
+    p.lookat.tilt = view[2]
+    return p
+
+def make_point(doc,f,query):
+
+    g = googleAPI(query)
+    address = g['features'][0]['properties']['address']
+    coord = g['features'][0]['geometry']['coordinates']
+    p = f.newpoint(name=query,coords=[(coord[0],coord[1],0.0)])
+    return p
 
 def print_kml(doc):
-    
+   
     print doc.kml() 
+
+def write_kml(doc,filename):
+
+    #import code; code.interact(local=dict(globals(), **locals()))
+    # Detect KMZ 
+    if filename.lower().endswith('.kmz'):
+        doc.savekmz(filename)
+    # Write KML
+    elif filename.lower().endswith('.kml'):
+        doc.save(filename)
+    else:
+        # Add extension to filename
+        doc.save(filename.lower() + '.kml')
+
+def tour_kml(view):
+
+    print 'Generate Tour here'
 
 def googleAPI(query):
 
