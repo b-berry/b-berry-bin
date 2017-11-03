@@ -1,5 +1,6 @@
 #!/usr/bin/python
 
+#import mechanize
 import re
 import sys
 import urllib

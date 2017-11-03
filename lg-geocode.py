@@ -1,70 +1,83 @@
 #!/usr/bin/python
 
 import geocoder
+<<<<<<< HEAD
 import sys
 from fastkml import kml
 from optparse import OptionParser
 from shapely.geometry import Point
+=======
+import simplekml
+import sys
+from optparse import OptionParser
+>>>>>>> development
 
 global ns 
 ns = '{http://www.opengis.net/kml/2.2}'
 
 def main():
 
+    # Set default view => (range,heading,tilt)
+    default_view = (1000.0,0.0,75.0) 
+
     parser = OptionParser()
-    parser.add_option("-k", "--kml", dest="kml",
-        action="callback", callback=vararg_callback,
-        default=False, help="Run geocode operation and output KML")
-    parser.add_option("-q", "--quick", dest="quick",
-        action="callback", callback=vararg_callback,
-        default=False, help="Run quick geocode operation. ie Provide string queries as args")
-    parser.add_option("-w", "--write", dest="write",
-        default=False, help="Write results to FILE")
+    parser.add_option('-k', '--kml', dest='kml',
+        action='callback', callback=vararg_callback,
+        default=False, help='Run geocode operation and output KML')
+    # This OPT behavior needs work:
+    parser.add_option('-l', '--lookat', nargs=3, dest='lookAt',
+        default=default_view, action='store', help=('Generate KML:LookAt   '
+            'ex: -l <range> <heading> <tilt>'))
+    parser.add_option('-q', '--quick', dest='quick',
+        action='callback', callback=vararg_callback,
+        default=False, help='Run quick geocode operation. ie Provide string queries as args')
+    parser.add_option('-w', '--write', dest='write',
+        default=False, metavar='FILE', help='Write results to FILE')
     (options, args) = parser.parse_args()
 
-    #print options
+    print options
     #import code; code.interact(local=dict(globals(), **locals()))
 
     if options.quick:
         quick(sys.argv)
     if options.kml:
-        k,d = initKML('Document')
-        f = kml_folder('Placemarks')
-        d.append(f)
+        # Initiate KML Document
+        k = init_kml('Document')
+        # Create Folder
+        f = k.newfolder(name='Folder')
+        # Parse arg queries
         for query in options.kml:
             g = googleAPI(query)
             address = g['features'][0]['properties']['address']
             coord = g['features'][0]['geometry']['coordinates']
-            p = kml_placemark(coord,query)
-            f.append(p)
+            p = f.newpoint(name=query,coords=[(coord[0],coord[1],0.0)])
+            lookat_kml(p,options.lookAt)
+        # Print result KML
+        print_kml(k)
 
-        printKML(k)
+def init_kml(name):
 
-def initKML(name):
+    # Create the root KML && Document object
+    k = simplekml.Kml()
+    k.document.name = name
+    return k
 
-    # Create the root KML object
-    k = kml.KML()
+def lookat_kml(point,view):
 
-    # Create a KML Document and add it to the KML root object
-    d = kml.Document(ns, 'docid', name, 'doc description')
-    k.append(d)
-    return k,d
+    point.lookat.altitudemode = 'absolute'
+    point.lookat.altitude = 0.0
+    point.lookat.latitude = point.coords.__dict__['_coords'][0][1] 
+    point.lookat.longitude = point.coords.__dict__['_coords'][0][0]
+    point.lookat.range = view[0]
+    point.lookat.heading = view[1]
+    point.lookat.tilt = view[2]
+    #import code; code.interact(local=dict(globals(), **locals()))
 
-def printKML(doc):
+    return point
+
+def print_kml(doc):
     
-    print doc.to_string(prettyprint=True)
-    
-def kml_folder(name):
-
-    # Create a KML Folder and add it to the Document
-    return kml.Folder(ns, 'fid', name, 'f description')
-    
-def kml_placemark(point,name):
-
-    # Create a Placemark with a simple polygon geometry and add it to the
-    p = kml.Placemark(ns, 'id', name, 'description')
-    p.geometry =  Point(point[0],point[1],0)
-    return p
+    print doc.kml() 
 
 def googleAPI(query):
 
