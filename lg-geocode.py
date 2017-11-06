@@ -50,12 +50,14 @@ def main():
             for query in options.kml:
                 # Initiate KML Document
                 k = init_kml('Document')
+                # Create Network Link for gx:Tours
+                if options.tour:
+                    make_autoplay(k)
                 # Create Folder
                 f = k.newfolder(name='Folder')
-                p = make_point(k,f,query)
+                p = make_point(f,query)
                 #import code; code.interact(local=dict(globals(), **locals()))
                 #name = re.sub('[^A-Za-z0-9]+', '-', address)
-                # What should I do with this point 'p'
                 place = p.__dict__['_placemark']
                 name = re.sub('[^A-Za-z0-9]+', '-',
                     place.__dict__['_kml']['name'])
@@ -64,7 +66,7 @@ def main():
                     lookat_kml(p,options.lookAt)
                 elif options.tour:
                     name = name + '-tour'
-                    gxt = init_kml_tour(k)
+                    gxt = init_kml_tour(f)
                     # Attach a gx:Wait init to reduce problems
                     w0 = gxt.newgxwait(gxduration=0.3)
                     # Get user specified view
@@ -72,7 +74,7 @@ def main():
                         view = options.lookAt
                     else:
                         view = default_view
-                    f = flyto_kml(gxt,p,view)
+                    gxf = flyto_kml(gxt,p,view)
                     wN = gxt.newgxwait(gxduration=2.0)
                 if options.write:
                     write_kml(k,name)
@@ -90,19 +92,19 @@ def init_kml(name):
 
 def flyto_kml(gtx,p,view):
 
-    f = gtx.newgxflyto(gxduration=4)
-    f.lookat.altitudemode = 'absolute'
-    f.lookat.altitude = 0.0
-    f.lookat.latitude = p.coords.__dict__['_coords'][0][1] 
-    f.lookat.longitude = p.coords.__dict__['_coords'][0][0]
-    f.lookat.range = view[0]
-    f.lookat.heading = view[1]
-    f.lookat.tilt = view[2]
-    return f
+    gxf = gtx.newgxflyto(gxduration=4)
+    gxf.lookat.altitudemode = 'absolute'
+    gxf.lookat.altitude = 0.0
+    gxf.lookat.latitude = p.coords.__dict__['_coords'][0][1] 
+    gxf.lookat.longitude = p.coords.__dict__['_coords'][0][0]
+    gxf.lookat.range = view[0]
+    gxf.lookat.heading = view[1]
+    gxf.lookat.tilt = view[2]
+    return gxf
 
-def init_kml_tour(k):
-    
-    t = k.newgxtour(name='Play Me') 
+def init_kml_tour(f):
+
+    t = f.newgxtour(name='Play-Tour')
     return t.newgxplaylist()
 
 def lookat_kml(p,view):
@@ -116,12 +118,18 @@ def lookat_kml(p,view):
     p.lookat.tilt = view[2]
     return p
 
-def make_point(doc,f,query):
+def make_autoplay(k):
+
+    nl = k.newnetworklink(name='Autoplay')
+    nl.link.href = 'http://localhost:8765/query.html?query=playtour=Play-Tour'
+    nl.link.viewrefreshmod = simplekml.ViewRefreshMode.onrequest
+
+def make_point(obj,query):
 
     g = googleAPI(query)
     address = g['features'][0]['properties']['address']
     coord = g['features'][0]['geometry']['coordinates']
-    p = f.newpoint(name=query,coords=[(coord[0],coord[1],0.0)])
+    p = obj.newpoint(name=query,coords=[(coord[0],coord[1],0.0)])
     return p
 
 def print_kml(doc):
