@@ -21,4 +21,6 @@ if [ -d $LG_CHEF_DIR ]; then
   if [ -f ${LG_CHEF_DIR}/repo_scripts/lg-ssh.bash-completion ]; then
    source ${LG_CHEF_DIR}/repo_scripts/lg-ssh.bash-completion
   fi
+  # Append PATH
+  export PATH="$HOME/bin:$LG_CHEF_DIR/repo_scripts:$PATH"
 fi
