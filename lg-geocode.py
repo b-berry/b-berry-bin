@@ -48,10 +48,13 @@ def main():
         else:
             # Parse arg queries
             for query in options.kml:
+                print 'Running opts for: %s' %query
                 # Initiate KML Document
+                print '  Creating KML Document ',
                 k = init_kml('Document')
                 # Create Network Link for gx:Tours
                 if options.tour:
+                    print '  Creating NetworkLink:Autoplay ',
                     make_autoplay(k)
                 # Create Folder
                 f = k.newfolder(name='Folder')
@@ -66,6 +69,7 @@ def main():
                     lookat_kml(p,options.lookAt)
                 elif options.tour:
                     name = name + '-tour'
+                    print '  Generating gx:Tour ',
                     gxt = init_kml_tour(f)
                     # Attach a gx:Wait init to reduce problems
                     w0 = gxt.newgxwait(gxduration=0.3)
@@ -77,6 +81,7 @@ def main():
                     gxf = flyto_kml(gxt,p,view)
                     wN = gxt.newgxwait(gxduration=2.0)
                 if options.write:
+                    print '  Printing document: %s' %name,
                     write_kml(k,name)
                 else:
                     # Print result KML
@@ -86,9 +91,13 @@ def main():
 def init_kml(name):
 
     # Create the root KML && Document object
-    k = simplekml.Kml()
-    k.document.name = name
-    return k
+    try:
+        k = simplekml.Kml()
+        k.document.name = name
+        print 'OK'
+        return k
+    except:
+        print 'FAIL'
 
 def flyto_kml(gtx,p,view):
 
@@ -104,8 +113,12 @@ def flyto_kml(gtx,p,view):
 
 def init_kml_tour(f):
 
-    t = f.newgxtour(name='Play-Tour')
-    return t.newgxplaylist()
+    try:
+        t = f.newgxtour(name='Play-Tour')
+        print 'OK'
+        return t.newgxplaylist()
+    except:
+        print 'FAIL'
 
 def lookat_kml(p,view):
 
@@ -120,9 +133,13 @@ def lookat_kml(p,view):
 
 def make_autoplay(k):
 
-    nl = k.newnetworklink(name='Autoplay')
-    nl.link.href = 'http://localhost:8765/query.html?query=playtour=Play-Tour'
-    nl.link.viewrefreshmod = simplekml.ViewRefreshMode.onrequest
+    try:
+        nl = k.newnetworklink(name='Autoplay')
+        nl.link.href = 'http://localhost:8765/query.html?query=playtour=Play-Tour'
+        nl.link.viewrefreshmod = simplekml.ViewRefreshMode.onrequest
+        print 'OK'
+    except:
+        print 'FAIL'
 
 def make_point(obj,query):
 
@@ -140,14 +157,19 @@ def write_kml(doc,filename):
 
     #import code; code.interact(local=dict(globals(), **locals()))
     # Detect KMZ 
-    if filename.lower().endswith('.kmz'):
-        doc.savekmz(filename)
-    # Write KML
-    elif filename.lower().endswith('.kml'):
-        doc.save(filename)
-    else:
-        # Add extension to filename
-        doc.save(filename.lower() + '.kml')
+    try:
+        if filename.lower().endswith('.kmz'):
+            doc.savekmz(filename)
+        # Write KML
+        elif filename.lower().endswith('.kml'):
+            doc.save(filename)
+        else:
+            # Add extension to filename
+            doc.save(filename.lower() + '.kml')
+        print 'OK'
+    except IOError:
+        print 'FAIL'
+
 
 def tour_kml(view):
 
