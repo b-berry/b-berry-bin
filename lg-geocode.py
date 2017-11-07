@@ -56,21 +56,10 @@ def main():
                 if options.tour:
                     print '  Creating NetworkLink:Autoplay ',
                     make_autoplay(k)
-                # Create Folder
-                f = k.newfolder(name='Folder')
-                p = make_point(f,query)
-                #import code; code.interact(local=dict(globals(), **locals()))
-                #name = re.sub('[^A-Za-z0-9]+', '-', address)
-                place = p.__dict__['_placemark']
-                name = re.sub('[^A-Za-z0-9]+', '-',
-                    place.__dict__['_kml']['name'])
-                if options.lookAt and not options.tour:
-                    name = name + '-lookat'
-                    lookat_kml(p,options.lookAt)
-                elif options.tour:
-                    name = name + '-tour'
+                    name = re.sub('[^A-Za-z0-9]+', '-',
+                        query) + '-tour'
                     print '  Generating gx:Tour ',
-                    gxt = init_kml_tour(f)
+                    gxt = init_kml_tour(k)
                     # Attach a gx:Wait init to reduce problems
                     w0 = gxt.newgxwait(gxduration=0.3)
                     # Get user specified view
@@ -78,8 +67,17 @@ def main():
                         view = options.lookAt
                     else:
                         view = default_view
-                    gxf = flyto_kml(gxt,p,view)
+                    gxf = flyto_kml(gxt,query,view)
                     wN = gxt.newgxwait(gxduration=2.0)
+                else:
+                    # Create Folder
+                    f = k.newfolder(name='Folder')
+                    p = make_point(f,query)
+                    #name = re.sub('[^A-Za-z0-9]+', '-', address)
+                    place = p.__dict__['_placemark']
+                    name = re.sub('[^A-Za-z0-9]+', '-',
+                        place.__dict__['_kml']['name']) + '-lookat'
+                    lookat_kml(p,options.lookAt)
                 if options.write:
                     print '  Printing document: %s' %name,
                     write_kml(k,name)
@@ -99,13 +97,18 @@ def init_kml(name):
     except:
         print 'FAIL'
 
-def flyto_kml(gtx,p,view):
+def flyto_kml(gtx,query,view):
 
+    g = googleAPI(query)
+    address = g['features'][0]['properties']['address']
+    coord = g['features'][0]['geometry']['coordinates']
+
+    #import code; code.interact(local=dict(globals(), **locals()))
     gxf = gtx.newgxflyto(gxduration=4)
     gxf.lookat.altitudemode = 'absolute'
     gxf.lookat.altitude = 0.0
-    gxf.lookat.latitude = p.coords.__dict__['_coords'][0][1] 
-    gxf.lookat.longitude = p.coords.__dict__['_coords'][0][0]
+    gxf.lookat.latitude = coord[1]
+    gxf.lookat.longitude = coord[0]
     gxf.lookat.range = view[0]
     gxf.lookat.heading = view[1]
     gxf.lookat.tilt = view[2]
@@ -146,6 +149,7 @@ def make_point(obj,query):
     g = googleAPI(query)
     address = g['features'][0]['properties']['address']
     coord = g['features'][0]['geometry']['coordinates']
+
     p = obj.newpoint(name=query,coords=[(coord[0],coord[1],0.0)])
     return p
 
