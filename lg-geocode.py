@@ -60,15 +60,16 @@ def main():
                         query) + '-tour'
                     print '  Generating gx:Tour ',
                     gxt = init_kml_tour(k)
-                    # Attach a gx:Wait init to reduce problems
-                    w0 = gxt.newgxwait(gxduration=0.3)
+                    # Add a gx:Wait init to reduce problems
+                    gxt.newgxwait(gxduration=0.3)
                     # Get user specified view
                     if options.lookAt:
                         view = options.lookAt
                     else:
                         view = default_view
                     gxf = flyto_kml(gxt,query,view)
-                    wN = gxt.newgxwait(gxduration=2.0)
+                    # Add a gx:Wait for render
+                    gxt.newgxwait(gxduration=2.0)
                 else:
                     # Create Folder
                     f = k.newfolder(name='Folder')
