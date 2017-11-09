@@ -1,3 +1,4 @@
+czml >- 0.3.3
 fastkml >= 0.11
 future >= 0.16.0
 geocoder >= 1.32.1

@@ -1,5 +1,6 @@
 #!/usr/bin/python
 
+import czml
 import geocoder
 import re
 import simplekml
@@ -15,12 +16,16 @@ def main():
     default_view = (1000.0,0.0,75.0) 
 
     parser = OptionParser()
+    parser.add_option('-b', dest='bb',
+            default=False, metavar='IMG', help='Create CZML:Billboard')
+    parser.add_option('-c', '--czml', dest='czml',
+        action='callback', callback=vararg_callback,
+        default=False, help='Run geocode operation and output CZML')
     parser.add_option('-k', '--kml', dest='kml',
         action='callback', callback=vararg_callback,
         default=False, help='Run geocode operation and output KML')
     parser.add_option('-i', '--inline', dest='inline',
-        default=False, action='store_true', help=('Combine queries as single ' 
-            'KML document'))
+        default=False, action='store_true', help='Write queries into single document')
     # This OPT behavior needs work:
     parser.add_option('-l', '--lookat', nargs=3, dest='lookAt',
         default=default_view, action='store', help=('Generate KML:LookAt   '
@@ -40,52 +45,31 @@ def main():
     if options.quick:
         quick(sys.argv)
         exit(0)
-    if options.kml:
-        if options.inline:
-            # Build single KML File
-            print 'options.inline todo'
-            exit(0)
+    if options.inline:
+        # Build single KML File
+        print 'options.inline todo'
+        exit(0)
+    else:
+        if options.czml:
+            parse_czml(options)
+        elif options.kml:
+            parse_kml(options)
         else:
-            # Parse arg queries
-            for query in options.kml:
-                print 'Running opts for: %s' %query
-                # Initiate KML Document
-                print '  Creating KML Document ',
-                k = init_kml('Document')
-                # Create Network Link for gx:Tours
-                if options.tour:
-                    print '  Creating NetworkLink:Autoplay ',
-                    make_autoplay(k)
-                    name = re.sub('[^A-Za-z0-9]+', '-',
-                        query) + '-tour'
-                    print '  Generating gx:Tour ',
-                    gxt = init_kml_tour(k)
-                    # Add a gx:Wait init to reduce problems
-                    gxt.newgxwait(gxduration=0.3)
-                    # Get user specified view
-                    if options.lookAt:
-                        view = options.lookAt
-                    else:
-                        view = default_view
-                    gxf = flyto_kml(gxt,query,view)
-                    # Add a gx:Wait for render
-                    gxt.newgxwait(gxduration=2.0)
-                else:
-                    # Create Folder
-                    f = k.newfolder(name='Folder')
-                    p = make_point(f,query)
-                    #name = re.sub('[^A-Za-z0-9]+', '-', address)
-                    place = p.__dict__['_placemark']
-                    name = re.sub('[^A-Za-z0-9]+', '-',
-                        place.__dict__['_kml']['name']) + '-lookat'
-                    lookat_kml(p,options.lookAt)
-                if options.write:
-                    print '  Printing document: %s' %name,
-                    write_kml(k,name)
-                else:
-                    # Print result KML
-                    print_kml(k)
+            print 'Options parse error.  Exiting'
+            exit(1)
 
+
+def init_czml():
+
+    try:
+        # Create root CZML && Document object
+        c = czml.CZML()
+        p = czml.CZMLPacket(id='document',version='1.0')
+        c.packets.append(p)
+        print 'OK'
+        return c
+    except:
+        print 'FAIL'
 
 def init_kml(name):
 
@@ -154,9 +138,97 @@ def make_point(obj,query):
     p = obj.newpoint(name=query,coords=[(coord[0],coord[1],0.0)])
     return p
 
+def make_billboard(obj,query,img):
+
+    g = googleAPI(query)
+    address = g['features'][0]['properties']['address']
+    coord = g['features'][0]['geometry']['coordinates']
+    coord.append('150')
+
+    try:
+        # Create and append a billboard packet
+        v = czml.Position(cartographicDegrees = coord)
+        p = czml.CZMLPacket(id='billboard', position=v)
+        bb = czml.Billboard(scale=0.5, show=True)
+        bb.image = img
+        bb.color = {'rgba': [0, 255, 127, 55]}
+        p.billboard = bb
+        obj.packets.append(p)
+        print 'OK'
+    except:
+        print 'FAIL'
+
+def parse_czml(options):
+
+    for query in options.czml:
+        print 'Running opts for: %s' %query
+        print '  Creating CZML Document: ',
+        c = init_czml()
+        if options.bb:
+            name = re.sub('[^A-Za-z0-9]+', '-',
+                query) + '-billboard'
+            print '  Generating billboard: %s ' %name,
+            make_billboard(c,query,options.bb)
+
+    print '  Printing document: %s' %name,
+    write_czml(c,name + '.czml')
+
+def parse_kml(options):
+
+    # Parse arg queries
+    for query in options.kml:
+        print 'Running opts for: %s' %query
+        # Initiate KML Document
+        print '  Creating KML Document ',
+        k = init_kml('Document')
+        # Create Network Link for gx:Tours
+        if options.tour:
+            print '  Creating NetworkLink:Autoplay ',
+            make_autoplay(k)
+            name = re.sub('[^A-Za-z0-9]+', '-',
+                query) + '-tour'
+            print '  Generating gx:Tour ',
+            gxt = init_kml_tour(k)
+            # Add a gx:Wait init to reduce problems
+            gxt.newgxwait(gxduration=0.3)
+            # Get user specified view
+            if options.lookAt:
+                view = options.lookAt
+            else:
+                view = default_view
+            gxf = flyto_kml(gxt,query,view)
+            # Add a gx:Wait for render
+            gxt.newgxwait(gxduration=2.0)
+        else:
+            # Create Folder
+            f = k.newfolder(name='Folder')
+            p = make_point(f,query)
+            #name = re.sub('[^A-Za-z0-9]+', '-', address)
+            place = p.__dict__['_placemark']
+            name = re.sub('[^A-Za-z0-9]+', '-',
+                place.__dict__['_kml']['name']) + '-lookat'
+            lookat_kml(p,options.lookAt)
+        if options.write:
+            print '  Printing document: %s' %name,
+            write_kml(k,name)
+        else:
+            # Print result KML
+            print_kml(k)
+
 def print_kml(doc):
    
     print doc.kml() 
+
+def write_czml(doc,filename):
+
+    try:
+        if filename.lower().endswith('.czml'):
+            doc.write(filename)
+        else:
+            doc.write(filename + '.czml')
+        print 'OK'
+    except:
+        print 'FAIL'
 
 def write_kml(doc,filename):
 
