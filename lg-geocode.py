@@ -3,9 +3,10 @@
 import czml
 import geocoder
 import re
-import simplekml
 import sys
+from fastkml import kml
 from optparse import OptionParser
+from shapely.geometry import Point
 
 global ns 
 ns = '{http://www.opengis.net/kml/2.2}'
