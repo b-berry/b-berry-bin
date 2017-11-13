@@ -3,8 +3,8 @@
 import czml
 import geocoder
 import re
+import simplekml
 import sys
-from fastkml import kml
 from optparse import OptionParser
 from shapely.geometry import Point
 
@@ -191,7 +191,7 @@ def parse_kml(options):
             print '  Generating gx:Tour ',
             gxt = init_kml_tour(k)
             # Add a gx:Wait init to reduce problems
-            gxt.newgxwait(gxduration=0.3)
+            w0 = gxt.newgxwait(gxduration=0.3)
             # Get user specified view
             if options.lookAt:
                 view = options.lookAt
@@ -199,7 +199,7 @@ def parse_kml(options):
                 view = default_view
             gxf = flyto_kml(gxt,query,view)
             # Add a gx:Wait for render
-            gxt.newgxwait(gxduration=2.0)
+            w1 = gxt.newgxwait(gxduration=2.0)
         else:
             # Create Folder
             f = k.newfolder(name='Folder')
