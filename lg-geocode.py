@@ -3,8 +3,8 @@
 import czml
 import geocoder
 import re
+import simplekml
 import sys
-from fastkml import kml
 from optparse import OptionParser
 from shapely.geometry import Point
 
@@ -83,18 +83,14 @@ def init_kml(name):
     except:
         print 'FAIL'
 
-def flyto_kml(gtx,query,view):
-
-    g = googleAPI(query)
-    address = g['features'][0]['properties']['address']
-    coord = g['features'][0]['geometry']['coordinates']
+def flyto_kml(gtx,point,view):
 
     #import code; code.interact(local=dict(globals(), **locals()))
     gxf = gtx.newgxflyto(gxduration=4)
     gxf.lookat.altitudemode = 'absolute'
     gxf.lookat.altitude = 0.0
-    gxf.lookat.latitude = coord[1]
-    gxf.lookat.longitude = coord[0]
+    gxf.lookat.latitude = point['lat']
+    gxf.lookat.longitude = point['lng']
     gxf.lookat.range = view[0]
     gxf.lookat.heading = view[1]
     gxf.lookat.tilt = view[2]
@@ -130,26 +126,24 @@ def make_autoplay(k):
     except:
         print 'FAIL'
 
-def make_point(obj,query):
-
-    g = googleAPI(query)
-    address = g['features'][0]['properties']['address']
-    coord = g['features'][0]['geometry']['coordinates']
-
-    p = obj.newpoint(name=query,coords=[(coord[0],coord[1],0.0)])
-    return p
-
-def make_billboard(obj,query,img):
-
-    g = googleAPI(query)
-    address = g['features'][0]['properties']['address']
-    coord = g['features'][0]['geometry']['coordinates']
-    coord.append('150')
+def make_point(obj,point):
 
     try:
+        p = obj.newpoint(name=point['address'],coords=[(point['lng'],point['lat'],0.0)])
+        return p
+    except:
+        print 'FAIL'
+
+def make_billboard(obj,point,img):
+
+
+    try:
+        # Define coord tuple
+        coord = [ point['lng'], point['lat'], 150 ]
+
         # Create and append a billboard packet
         v = czml.Position(cartographicDegrees = coord)
-        p = czml.CZMLPacket(id='billboard', position=v)
+        p = czml.CZMLPacket(id=point['address'], position=v)
         bb = czml.Billboard(scale=0.5, show=True)
         bb.image = img
         bb.color = {'rgba': [0, 255, 127, 55]}
@@ -169,7 +163,8 @@ def parse_czml(options):
             name = re.sub('[^A-Za-z0-9]+', '-',
                 query) + '-billboard'
             print '  Generating billboard: %s ' %name,
-            make_billboard(c,query,options.bb)
+            results = googleAPI(query)
+            make_billboard(c,results,options.bb)
 
     print '  Printing document: %s' %name,
     write_czml(c,name + '.czml')
@@ -191,19 +186,21 @@ def parse_kml(options):
             print '  Generating gx:Tour ',
             gxt = init_kml_tour(k)
             # Add a gx:Wait init to reduce problems
-            gxt.newgxwait(gxduration=0.3)
+            w0 = gxt.newgxwait(gxduration=0.3)
             # Get user specified view
             if options.lookAt:
                 view = options.lookAt
             else:
                 view = default_view
-            gxf = flyto_kml(gxt,query,view)
+            results = googleAPI(query)
+            gxf = flyto_kml(gxt,results,view)
             # Add a gx:Wait for render
-            gxt.newgxwait(gxduration=2.0)
+            w1 = gxt.newgxwait(gxduration=2.0)
         else:
             # Create Folder
             f = k.newfolder(name='Folder')
-            p = make_point(f,query)
+            results = googleAPI(query)
+            p = make_point(f,results)
             #name = re.sub('[^A-Za-z0-9]+', '-', address)
             place = p.__dict__['_placemark']
             name = re.sub('[^A-Za-z0-9]+', '-',
@@ -233,7 +230,6 @@ def write_czml(doc,filename):
 
 def write_kml(doc,filename):
 
-    #import code; code.interact(local=dict(globals(), **locals()))
     # Detect KMZ 
     try:
         if filename.lower().endswith('.kmz'):
@@ -256,8 +252,10 @@ def tour_kml(view):
 def googleAPI(query):
 
     try:
-        g = geocoder.google(query)
-        return g.geojson
+        results = {}
+        g = geocoder.google(query).geojson
+        results = g['features'][0]['properties']
+        return results
     except:
         print 'Geocode lookup on query: %s FAIL' %query
         exit(2)
@@ -269,14 +267,12 @@ def quick(args):
             if query == args[0] or query.startswith('-'):
                 next
             else:
-                g = googleAPI(query)
+                results = googleAPI(query)
                 # Print Results
-                address = g['features'][0]['properties']['address']
-                coord = g['features'][0]['geometry']['coordinates']
                 print ('Query: %s'
                        '\n\tAddress: %s'
                        '\n\tLongitude: %s'
-                       '\n\tLatitude: %s' %(query,address,coord[0],coord[1])
+                       '\n\tLatitude: %s' %(query,results['address'],results['lng'],results['lat'])
                       )
     except ValueError:
         print 'Error: queries not iterable as given'

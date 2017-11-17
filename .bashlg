@@ -23,4 +23,6 @@ if [ -d $LG_CHEF_DIR ]; then
   fi
   # Append PATH
   export PATH="$HOME/bin:$LG_CHEF_DIR/repo_scripts:$PATH"
+  # More aliases
+  alias lg-vnc="lg-ssh --local-forwards 5900:42-a:5900,5901:42-b:5900 $1"
 fi
