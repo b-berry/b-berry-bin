@@ -1,10 +1,11 @@
 #!/usr/bin/python
-
+import csv
 import czml
 import geocoder
 import re
 import simplekml
 import sys
+import time
 from optparse import OptionParser
 from shapely.geometry import Point
 
@@ -25,15 +26,19 @@ def main():
     parser.add_option('-k', '--kml', dest='kml',
         action='callback', callback=vararg_callback,
         default=False, help='Run geocode operation and output KML')
-    parser.add_option('-i', '--inline', dest='inline',
-        default=False, action='store_true', help='Write queries into single document')
+    parser.add_option('-i', dest='infile',
+            default=False, metavar='INFILE.csv', help='Create KML:Placemarks from file')
+    #parser.add_option('-I', '--Inline', dest='inline',
+    #    default=False, action='store_true', help='Write queries into single document')
     # This OPT behavior needs work:
     parser.add_option('-l', '--lookat', nargs=3, dest='lookAt',
-        default=default_view, action='store', help=('Generate KML:LookAt   '
+        default=False, action='store', help=('Generate KML:LookAt   '
             'ex: -l <range> <heading> <tilt>'))
     parser.add_option('-q', '--quick', dest='quick',
         action='callback', callback=vararg_callback,
         default=False, help='Run quick geocode operation. ie Provide string queries as args')
+    parser.add_option('-p', dest='place',
+            default=False, metavar='PIN', help='Create KML:Placemark')
     parser.add_option('-t', '--tour', dest='tour',
         default=False, action='store_true', help='Generate KML:gx:Tour')
     parser.add_option('-w', '--write', dest='write',
@@ -46,15 +51,19 @@ def main():
     if options.quick:
         quick(sys.argv)
         exit(0)
-    if options.inline:
-        # Build single KML File
-        print 'options.inline todo'
-        exit(0)
+    #if options.inline:
+    #    # Build single KML File
+    #    print 'options.inline todo'
+    #    exit(0)
     else:
         if options.czml:
             parse_czml(options)
-        elif options.kml:
-            parse_kml(options)
+        elif options.kml or options.infile:
+            #import code; code.interact(local=dict(globals(), **locals()))
+            if options.infile:
+                parse_csv(options)
+            else:
+                parse_kml(options)
         else:
             print 'Options parse error.  Exiting'
             exit(1)
@@ -126,16 +135,7 @@ def make_autoplay(k):
     except:
         print 'FAIL'
 
-def make_point(obj,point):
-
-    try:
-        p = obj.newpoint(name=point['address'],coords=[(point['lng'],point['lat'],0.0)])
-        return p
-    except:
-        print 'FAIL'
-
 def make_billboard(obj,point,img):
-
 
     try:
         # Define coord tuple
@@ -151,6 +151,50 @@ def make_billboard(obj,point,img):
         obj.packets.append(p)
         print 'OK'
     except:
+        print 'FAIL'
+
+def make_placemark(pnt,image):
+
+    try:
+        pnt.style.iconstyle.icon.href = image
+    except:
+        print 'FAIL'
+
+def make_point(obj,point):
+
+    try:
+        p = obj.newpoint(name=point['address'],coords=[(point['lng'],point['lat'],0.0)])
+        return p
+    except:
+        print 'FAIL'
+
+def parse_csv(options):
+
+    # Initiate KML Document
+    print 'Creating KML Document ',
+    k = init_kml('Document')
+    # Create Folder
+    f = k.newfolder(name='Folder')
+    # Read CSVFile from infile
+    try:
+        with open(options.infile) as csvfile:
+            reader = csv.DictReader(csvfile)
+            for row in reader:
+                query = str(row['Location Name'] + ', ' + row ['Address'])
+                print 'Running opts for: %s' %query,
+                results = googleAPI(query)
+                if not results:
+                    continue
+                else:
+                    p = make_point(f,results)
+                    make_placemark(p,options.place)
+                # Sleep to meet API Restriction
+                time.sleep(1.0)
+            print '  Printing document: \'my-csv-doc.kml\'',
+            #write_kml(k,'my-csv-doc.kml')
+            print_kml(k)
+
+    except IOError:
         print 'FAIL'
 
 def parse_czml(options):
@@ -201,11 +245,14 @@ def parse_kml(options):
             f = k.newfolder(name='Folder')
             results = googleAPI(query)
             p = make_point(f,results)
+            if options.place:
+                make_placemark(p,options.place)
             #name = re.sub('[^A-Za-z0-9]+', '-', address)
             place = p.__dict__['_placemark']
             name = re.sub('[^A-Za-z0-9]+', '-',
                 place.__dict__['_kml']['name']) + '-lookat'
-            lookat_kml(p,options.lookAt)
+            if options.lookAt:
+                lookat_kml(p,options.lookAt)
         if options.write:
             print '  Printing document: %s' %name,
             write_kml(k,name)
@@ -255,10 +302,12 @@ def googleAPI(query):
         results = {}
         g = geocoder.google(query).geojson
         results = g['features'][0]['properties']
+        print 'OK'
         return results
     except:
-        print 'Geocode lookup on query: %s FAIL' %query
-        exit(2)
+        print 'FAIL'
+        return False
+        #exit(2)
 
 def quick(args):
 
