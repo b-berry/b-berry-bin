@@ -211,7 +211,6 @@ def parse_csv(options):
                 write_kml(k,name)
             else:
                 print_kml(k)
-
     except IOError:
         print 'FAIL'
 
