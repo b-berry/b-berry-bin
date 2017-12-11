@@ -1,6 +1,6 @@
 #!/bin/bash
 
-GEOMETRY_G='155x45+88+68'
+GEOMETRY_G='155x45+38+48'
 GEOMETRY_X='155x45+35+50'
 PROFILE='default'
 SESS='desktop'
