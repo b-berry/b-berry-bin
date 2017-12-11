@@ -2,6 +2,7 @@
 import csv
 import czml
 import geocoder
+import os
 import re
 import simplekml
 import sys
@@ -157,6 +158,8 @@ def make_placemark(pnt,image):
 
     try:
         pnt.style.iconstyle.icon.href = image
+        # For now, assume no label if placemark pin
+        pnt.style.labelstyle.scale = 0
     except:
         print 'FAIL'
 
@@ -170,29 +173,44 @@ def make_point(obj,point):
 
 def parse_csv(options):
 
+    try:
+        base = os.path.basename(options.infile)
+        name = re.sub('[^A-Za-z0-9]+','-',os.path.splitext(base)[0])
+        print 'Parsing CSV: %s' %name
+    except:
+        print 'Error parsing filename'
+        exit()
+
     # Initiate KML Document
     print 'Creating KML Document ',
     k = init_kml('Document')
     # Create Folder
     f = k.newfolder(name='Folder')
+
     # Read CSVFile from infile
     try:
+        print 'Running opts for:'
         with open(options.infile) as csvfile:
             reader = csv.DictReader(csvfile)
             for row in reader:
-                query = str(row['Location Name'] + ', ' + row ['Address'])
-                print 'Running opts for: %s' %query,
+                query = re.sub('[^A-Za-z0-9]+','-',
+                    str(row['Location Name'] + ', ' + row ['Address'])
+                )
+                print '%s' %query,
                 results = googleAPI(query)
                 if not results:
                     continue
                 else:
                     p = make_point(f,results)
-                    make_placemark(p,options.place)
+                    if options.place:
+                        make_placemark(p,options.place)
                 # Sleep to meet API Restriction
                 time.sleep(1.0)
-            print '  Printing document: \'my-csv-doc.kml\'',
-            #write_kml(k,'my-csv-doc.kml')
-            print_kml(k)
+            print 'Printing document: %s' %name,
+            if options.write:
+                write_kml(k,name)
+            else:
+                print_kml(k)
 
     except IOError:
         print 'FAIL'
@@ -262,6 +280,7 @@ def parse_kml(options):
 
 def print_kml(doc):
    
+    #import code; code.interact(local=dict(globals(), **locals()))
     print doc.kml() 
 
 def write_czml(doc,filename):
