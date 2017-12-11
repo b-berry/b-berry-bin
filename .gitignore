@@ -5,3 +5,5 @@
 *.czml
 *.kml
 *.kmz
+*.log
+testing/*
