@@ -37,7 +37,7 @@ def main():
             'ex: -l <range> <heading> <tilt>'))
     parser.add_option('-q', '--quick', dest='quick',
         action='callback', callback=vararg_callback,
-        default=False, help='Run quick geocode operation. ie Provide string queries as args')
+        default=False, help='Run quick geocode operation. ie \'seattle,wa\'')
     parser.add_option('-p', dest='place',
             default=False, metavar='PIN', help='Create KML:Placemark')
     parser.add_option('-t', '--tour', dest='tour',
