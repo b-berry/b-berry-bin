@@ -26,3 +26,8 @@ if [ -d $LG_CHEF_DIR ]; then
   # More aliases
   alias lg-vnc="lg-ssh --local-forwards 5900:42-a:5900,5901:42-b:5900 $1"
 fi
+
+# Misc Configs
+if [ -f $HOME/bin/git-auto-pr.sh ]; then
+  alias pull-me="$HOME/bin/git-auto-pr.sh"
+fi 
