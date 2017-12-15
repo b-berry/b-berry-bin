@@ -1,6 +1,27 @@
 #!/bin/bash
 
+function run_cmd() {
+
+  echo "Command: $1"
+  echo "Run this command? [Yes/No]"
+  # Ask User confirmation
+  read RUN
+
+  case $RUN in
+    [yY]|[yY]es)
+      echo "Running: $CMD"
+      $CMD
+      ;;
+    [nN]|[nN]o)
+      echo "User rejected run: Exiting!"
+      exit 0
+      ;;
+  esac
+
+}
+
 function test_str() {
+
   # Test Results 
   printf "Testing string: $1 "
   if [[ -z "$1" ]]; then
@@ -9,6 +30,7 @@ function test_str() {
     exit 1
   fi
   echo "OK"
+
 }
 
 # Get current branch
@@ -19,20 +41,9 @@ REMOTE=$(git branch -r | grep $BRANCH | sed -e 's/\ //g' | sed -e 's:/:\ :g')
 test_str "$REMOTE"
 # Define CMD
 CMD="git pull --rebase ${REMOTE}"
-
-# Debug
-echo "Command: $CMD"
-echo "Run this command? [Yes/No]"
-# Ask User confirmation
-read RUN
-
-case $RUN in
-  [yY]|[yY]es) 
-    echo "Running: $CMD"
-    $CMD
-    ;;
-  [nN]|[nN]o)
-    echo "User rejected run: Exiting!"
-    exit 0
-    ;;
-esac
+run_cmd "$CMD"
+# Ask to push if pr successful
+if [ $? -lt 1 ]; then
+  CMD="git push ${REMOTE}"
+  run_cmd "$CMD"
+fi
