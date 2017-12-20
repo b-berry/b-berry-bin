@@ -17,6 +17,7 @@ if [ -d $LG_CHEF_DIR ]; then
   alias lg-ssh="${LG_CHEF_DIR}/repo_scripts/lg-ssh"
   alias lg-scp="${LG_CHEF_DIR}/repo_scripts/lg-scp"
   alias gal-run="${LG_CHEF_DIR}/repo_scripts/gal-run"
+  alias lg-ts="lg-ssh --local-forwards=8088:localhost:8088,9090:42-a:9090,42111:localhost:42111"
   # Set up tab completion
   if [ -f ${LG_CHEF_DIR}/repo_scripts/lg-ssh.bash-completion ]; then
    source ${LG_CHEF_DIR}/repo_scripts/lg-ssh.bash-completion
