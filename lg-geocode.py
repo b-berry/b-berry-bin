@@ -107,7 +107,7 @@ def flyto_kml(gxt,point,view,dur):
 def orbit_kml(gxt,point,view,dur):
 
     #import code; code.interact(local=dict(globals(), **locals()))
-    for i in range(int(view[1]), int(view[1]) + 360):
+    for i in range(int(view[1]), int(view[1]) + 360, 7):
         vi = (view[0],i,view[2])
         gxf = flyto_kml(gxt,point,vi,dur)
 
