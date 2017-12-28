@@ -15,15 +15,14 @@ ns = '{http://www.opengis.net/kml/2.2}'
 
 def main():
 
-    # Set default view => (range,heading,tilt)
-    default_view = (1000.0,0.0,75.0) 
-
     parser = OptionParser()
     parser.add_option('-b', dest='bb',
             default=False, metavar='IMG', help='Create CZML:Billboard')
     parser.add_option('-c', '--czml', dest='czml',
         action='callback', callback=vararg_callback,
         default=False, help='Run geocode operation and output CZML')
+    parser.add_option('-f', '--flyto', dest='flyto',
+        default=False, action='store_true', help='Generate KML:gx:Tour::flyto')
     parser.add_option('-k', '--kml', dest='kml',
         action='callback', callback=vararg_callback,
         default=False, help='Run geocode operation and output KML')
@@ -38,10 +37,10 @@ def main():
     parser.add_option('-q', '--quick', dest='quick',
         action='callback', callback=vararg_callback,
         default=False, help='Run quick geocode operation. ie \'seattle,wa\'')
+    parser.add_option('-o', '--orbit', dest='orbit',
+        default=False, action='store_true', help='Generate KML:gx:Tour::orbit')
     parser.add_option('-p', dest='place',
             default=False, metavar='PIN', help='Create KML:Placemark')
-    parser.add_option('-t', '--tour', dest='tour',
-        default=False, action='store_true', help='Generate KML:gx:Tour')
     parser.add_option('-w', '--write', dest='write',
         default=False, action='store_true', help='Write results to FILE')
     (options, args) = parser.parse_args()
@@ -93,10 +92,9 @@ def init_kml(name):
     except:
         print 'FAIL'
 
-def flyto_kml(gtx,point,view):
+def flyto_kml(gxt,point,view,dur):
 
-    #import code; code.interact(local=dict(globals(), **locals()))
-    gxf = gtx.newgxflyto(gxduration=4)
+    gxf = gxt.newgxflyto(gxduration=dur)
     gxf.lookat.altitudemode = 'absolute'
     gxf.lookat.altitude = 0.0
     gxf.lookat.latitude = point['lat']
@@ -105,6 +103,13 @@ def flyto_kml(gtx,point,view):
     gxf.lookat.heading = view[1]
     gxf.lookat.tilt = view[2]
     return gxf
+
+def orbit_kml(gxt,point,view,dur):
+
+    #import code; code.interact(local=dict(globals(), **locals()))
+    for i in range(int(view[1]), int(view[1]) + 360):
+        vi = (view[0],i,view[2])
+        gxf = flyto_kml(gxt,point,vi,dur)
 
 def init_kml_tour(f):
 
@@ -232,6 +237,9 @@ def parse_czml(options):
 
 def parse_kml(options):
 
+    # Set default view => (range,heading,tilt)
+    default_view = (1000.0,0.0,75.0) 
+
     # Parse arg queries
     for query in options.kml:
         print 'Running opts for: %s' %query
@@ -239,11 +247,9 @@ def parse_kml(options):
         print '  Creating KML Document ',
         k = init_kml('Document')
         # Create Network Link for gx:Tours
-        if options.tour:
+        if options.flyto or options.orbit:
             print '  Creating NetworkLink:Autoplay ',
             make_autoplay(k)
-            name = re.sub('[^A-Za-z0-9]+', '-',
-                query) + '-tour'
             print '  Generating gx:Tour ',
             gxt = init_kml_tour(k)
             # Add a gx:Wait init to reduce problems
@@ -253,8 +259,18 @@ def parse_kml(options):
                 view = options.lookAt
             else:
                 view = default_view
+            # Google Search
+            print '  Submiting Google Query ',
             results = googleAPI(query)
-            gxf = flyto_kml(gxt,results,view)
+            # Construct Flight
+            if options.flyto:
+                name = re.sub('[^A-Za-z0-9]+', '-',
+                    query) + '-flyto'
+                gxf = flyto_kml(gxt,results,view,4.0)
+            if options.orbit:
+                name = re.sub('[^A-Za-z0-9]+', '-',
+                    query) + '-orbit'
+                gxf = orbit_kml(gxt,results,view,0.5)
             # Add a gx:Wait for render
             w1 = gxt.newgxwait(gxduration=2.0)
         else:
