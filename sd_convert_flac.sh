@@ -16,6 +16,6 @@ fi
 
 # Find files
 while read FILE; do
-  OUTFILE="${FIL%.*}.flac"
+  OUTFILE="${FILE%.*}.flac"
   ffmpeg -i $FILE -f flac $OUTFILE
 done< <(find "$MOUNTPOINT/Music/" -type f -not -iname "$FILETYPES")
