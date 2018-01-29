@@ -226,6 +226,9 @@ def parse_czml(options):
             print '  Generating billboard: %s ' %name,
             results = googleAPI(query)
             make_billboard(c,results,options.bb)
+        else: #Fix this
+            name = re.sub('[^A-Za-z0-9]+', '-', query)
+            results = googleAPI(query)
 
     print '  Printing document: %s' %name,
     write_czml(c,name + '.czml')
