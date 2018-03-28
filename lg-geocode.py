@@ -28,8 +28,8 @@ def main():
         default=False, help='Run geocode operation and output KML')
     parser.add_option('-i', dest='infile',
             default=False, metavar='INFILE.csv', help='Create KML:Placemarks from file')
-    #parser.add_option('-I', '--Inline', dest='inline',
-    #    default=False, action='store_true', help='Write queries into single document')
+    parser.add_option('-I', '--Inline', dest='inline',
+        default=False, action='store_true', help='Write queries into single document')
     # This OPT behavior needs work:
     parser.add_option('-l', '--lookat', nargs=3, dest='lookAt',
         default=False, action='store', help=('Generate KML:LookAt   '
@@ -180,8 +180,8 @@ def parse_csv(options):
 
     try:
         base = os.path.basename(options.infile)
-        name = re.sub('[^A-Za-z0-9]+','-',os.path.splitext(base)[0])
-        print 'Parsing CSV: %s' %name
+        csvname = re.sub('[^A-Za-z0-9]+','-',os.path.splitext(base)[0])
+        print 'Parsing CSV: %s' %csvname
     except:
         print 'Error parsing filename'
         exit()
@@ -199,7 +199,7 @@ def parse_csv(options):
             reader = csv.DictReader(csvfile)
             for row in reader:
                 query = re.sub('[^A-Za-z0-9]+','-',
-                    str(row['Location Name'] + ', ' + row ['Address'])
+                    str(row['Location'] + ', ' + row['Address'])
                 )
                 print '%s' %query,
                 results = googleAPI(query)
@@ -211,11 +211,24 @@ def parse_csv(options):
                         make_placemark(p,options.place)
                 # Sleep to meet API Restriction
                 time.sleep(1.0)
-            print 'Printing document: %s' %name,
-            if options.write:
-                write_kml(k,name)
-            else:
-                print_kml(k)
+                if not options.inline:
+                    # Write document now
+                    name = re.sub('[^A-Za-z0-9]+','-',
+                        str(row['Location'].lower())
+                    )
+                    print 'Printing document: %s' %name,
+                    if options.write:
+                        write_kml(k,name)
+                    else:
+                        print_kml(k)
+            # Print KML Doc after CSV Parsing Complete
+            if options.inline:
+                print 'Printing document: %s' %csvname,
+                if options.write:
+                    write_kml(k,csvname)
+                else:
+                    print_kml(k)
+
     except IOError:
         print 'FAIL'
 
@@ -295,7 +308,6 @@ def parse_kml(options):
 
 def print_kml(doc):
    
-    #import code; code.interact(local=dict(globals(), **locals()))
     print doc.kml() 
 
 def write_czml(doc,filename):
