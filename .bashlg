@@ -32,3 +32,6 @@ fi
 if [ -f $HOME/bin/git-auto-pr.sh ]; then
   alias pull-me="$HOME/bin/git-auto-pr.sh"
 fi 
+
+# Required for chef|knife
+export EDITOR="vim"
