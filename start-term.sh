@@ -11,7 +11,7 @@ function build_tmux {
     T_SESS=$1
 
     # Set up window names : => dir
-    declare -a conf_tmux=('me' 'far' '2' ':src' ':lg-chef' '5')
+    declare -a conf_tmux=('me' 'far' '2' ':src' ':petco-terraform' '5')
 
     first=true
     for n in $(seq 0 $(echo "${#conf_tmux[@]}-1" | bc)); do
@@ -63,8 +63,12 @@ function get_env {
         E_STATUS=0
         WM=$GDMSESSION
         return 
+    elif [ $TERM_PROGRAM == "Apple_Terminal" ]; then
+        printf 'OK\n  Desktop: %s\n  Session: %s\n' "$TERM_PROGRAM" "$LOGNAME"
+	E_STATUS=0
+	WM=$TERM_PROGRAM
     else
-        printf 'ERROR'
+        printf 'ERROR\n'
         E_STATUS=1
     fi
 
@@ -107,6 +111,12 @@ function start_x_term {
 
 }
 
+function start_apple_term {
+
+    echo "Starting terminal: $1"
+    echo '..TBD'
+}
+
 function usage {
 
     echo "Usage: start_term.sh OPT"
@@ -133,11 +143,19 @@ if [ -z $1 ]; then
         xorg)
             start_x_term $SESS
             ;;
+	Apple_Terminal)
+	    start_apple_term $SESS
+	    ;;
         esac
     fi
 else
     # Start term in proper env
     case $1 in
+    -a|--apple)
+        echo "Getting tmux"
+        get_tmux $SESS
+        start_apple_term $SESS
+         ;;
     -g|--gnome)
         echo "Getting tmux"
         get_tmux $SESS
