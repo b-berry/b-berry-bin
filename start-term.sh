@@ -115,6 +115,7 @@ function start_apple_term {
 
     echo "Starting terminal: $1"
     echo '..TBD'
+    tmux att -t $SESS
 }
 
 function usage {
@@ -134,7 +135,7 @@ if [ -z $1 ]; then
         usage
     else
 
-        get_tmux $SESS 
+        get_tmux $SESS
 
         case $WM in
         gnome)
