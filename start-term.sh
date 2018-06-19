@@ -11,7 +11,7 @@ function build_tmux {
     T_SESS=$1
 
     # Set up window names : => dir
-    declare -a conf_tmux=('me' 'far' '2' ':src' ':petco-terraform' '5')
+    declare -a conf_tmux=('me' 'far' '2' ':petcoalm-terraform' 'ops' '5')
 
     first=true
     for n in $(seq 0 $(echo "${#conf_tmux[@]}-1" | bc)); do
