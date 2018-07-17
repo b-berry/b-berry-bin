@@ -1,2 +1,14 @@
-*~
-*.swp
+[user]
+	name = Bryan Berry
+	email = bryan.berry@slalom.com
+	signingkey = AF8B8A86CA4CB1AEFD76EA2A274C86DF43BABF84
+[alias]
+	co = checkout
+	ci = commit
+	st = status
+	br = branch
+	hist = log --pretty=format:\"%h %ad | %s%d [%an]\" --graph --date=short
+	type = cat-file -t
+	dump = cat-file -p
+	prom = pull --rebase origin master
+	pom = push origin master
