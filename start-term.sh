@@ -24,20 +24,24 @@ function build_tmux {
   fi
 
   # Set up window names : => dir
-  declare -a conf_tmux=('me' 'far' '2' ":$PROJ" 'ops' '5')
+  declare -a conf_tmux=('me' 'far' 'near' ":$PROJ" 'ops' '5')
 
   first=true
   for n in $(seq 0 $(echo "${#conf_tmux[@]}-1" | bc)); do
-    echo $INSTANCE
+    INSTANCE="${conf_tmux[$n]}"
     # Sort item type
       if [[ $INSTANCE == *":"* ]]; then
-          NAME="${INSTANCE#*:}"
-          DIR=$(find $HOME/* -maxdepth 1 -type d -name $NAME)
-          echo $NAME
-          echo $DIR
-          # Correct dir if not found
-          if [ ! -d $DIR ]; then
+          NAME="${INSTANCE#:*}"
+          if [ -d $NAME ]; then
+            DIR=$NAME
+          else
+            echo "Debug 2b"
+            DIR=$(find $HOME/* -maxdepth 1 -type d -name $(basename $NAME))
+            # Correct dir if not found
+            if [ ! -d $DIR ]; then
+              echo "Debug 3"
               DIR=$HOME
+            fi
           fi
       else
           NAME=${conf_tmux[$n]}
@@ -46,7 +50,7 @@ function build_tmux {
       # If first create session
       if $first; then
           echo "Initiating tmux session: $T_SESS:$NAME"
-          tmux new-sess -d -s $T_SESS -n $NAME
+          tmux new-sess -d -s $T_SESS -n $(basename $NAME)
           T_STATUS=$?
           if [ $T_STATUS -lt 1 ]; then
               first=false
@@ -133,6 +137,7 @@ function usage {
     echo "Usage: start_term.sh OPT"
     echo "       OPT: Env:  {-a,--apple,-g,--gnome,-x,--xorg}"
     echo "       OPT: Tmux: {-s,--sess,-p,--proj}" 
+    exit 1
 
 }
 
@@ -170,7 +175,6 @@ while [ "$#" -gt 0 ]; do
       shift
       ;;
   *)  usage
-      shift
       ;;
   esac
 done
