@@ -2,15 +2,21 @@
 # Dependencies:
 # - Requires PIV Card to be inserted for Cert/Pin Verification
 
-set -x
+#set -x
 
-DOWNLOAD_DIR='/Users/bryan.berry/Downloads'
+DOWNLOAD_DIR="$HOME/Downloads"
+DOWNLOAD_TYPE='ica'
 LAUNCH_DHS_URI='https://quickconnect.dhs.gov'
-SQLITE_DIR="~/Library/Preferences/com.apple.LaunchServices.QuarantineEventsV2"
+SQLITE_DIR="$HOME/Library/Preferences/com.apple.LaunchServices.QuarantineEventsV2"
 
 function usage() {
-  echo "$0 [-b|--browser] [-u|--url] [-h|--help]"
+  echo "$0 [-b|--browser] [-d|--download-dir] [-t|--download-type] [-u|--url] [-x|--express] [-h|--help]"
   exit 0
+}
+
+function find_latest() {
+  find_file="$(find $1 -name \"*.${2}\" -print0 | xargs -0 ls -t | head -1)"
+  echo $find_file
 }
 
 function open_browser() {
@@ -22,8 +28,6 @@ function open_browser() {
     echo"Initiating Command: $cmd"
     eval $cmd
   fi
-  echo "Waiting for user to proceed.  Ready (press any key)"
-  read user_input
 }
 
 function read_data() {
@@ -46,13 +50,23 @@ while [[ $# -gt 0 ]]; do
       shift
       shift
       ;;
-    -u|--url)
-      user_uri="$2"
+    -e|--express)
+      user_launch_web=false
       shift
       shift
       ;;
-    -x|--express)
-      user_express=true
+    -t|--download-type)
+      user_download_type="$2"
+      shift
+      shift
+      ;;
+    -u|--url)
+      user_download_uri="$2"
+      shift
+      shift
+      ;;
+    -x|--exit)
+      user_exit_after_download=true
       shift
       shift
       ;;
@@ -68,12 +82,28 @@ set -- "${options[@]}"
 
 browser="${user_browser:-Safari}"
 download_dir="${user_download_dir:-$DOWNLOAD_DIR}"
-uri="${user_uri:-$LAUNCH_DHS_URI}"
-user_express="${user_express:-false}
-"
-if [ ! $user_express ]; then
-  open_browser $browser $uri
+download_type="${user_download_type:-$DOWNLOAD_TYPE}"
+launch_web="${user_launch_web:-true}"
+exit_after_download="${user_exit_after_download:-false}"
+download_uri="${user_download_uri:-$LAUNCH_DHS_URI}"
+
+if $launch_web; then
+  echo "Launching: $browser"
+  open_browser $browser $download_uri
+else
+  echo "Skipping: User specified -e|--express to skip browser launch"
 fi
 
-dataurlstring=read_data $SQLITE_DIR $browser
-echo $dataurlstring
+if $exit_after_download; then
+  echo "Exiting: User specified -x|--exit"
+  exit 0
+fi
+
+echo "Waiting for user to proceed.  Ready (press any key)"
+read user_input
+
+#dataurlstring=read_data $SQLITE_DIR $browser
+#echo $dataurlstring
+citrix_file="$(find_latest $download_dir $download_type)"
+#echo $citrix_file
+open -a Citrix\ Workspace "$citrix_file"
