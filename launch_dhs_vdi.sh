@@ -25,7 +25,7 @@ function open_browser() {
     exit 1
   else
     cmd="open -a $1 $2"
-    echo"Initiating Command: $cmd"
+    echo "Initiating Command: $cmd"
     eval $cmd
   fi
 }
