@@ -15,8 +15,7 @@ function usage() {
 }
 
 function find_latest() {
-  find_file="$(find $1 -name \"*.${2}\" -print0 | xargs -0 ls -t | head -1)"
-  echo $find_file
+  find ${1} -name "*.${2}" -print0 | xargs -0 ls -t | head -1
 }
 
 function open_browser() {
@@ -105,5 +104,6 @@ read user_input
 #dataurlstring=read_data $SQLITE_DIR $browser
 #echo $dataurlstring
 citrix_file="$(find_latest $download_dir $download_type)"
-#echo $citrix_file
-open -a Citrix\ Workspace "$citrix_file"
+cmd="open -a Citrix\ Viewer \"${citrix_file}\""
+echo "Initiating Worskpace: $cmd"
+eval $cmd
