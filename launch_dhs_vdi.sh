@@ -86,20 +86,31 @@ launch_web="${user_launch_web:-true}"
 exit_after_download="${user_exit_after_download:-false}"
 download_uri="${user_download_uri:-$LAUNCH_DHS_URI}"
 
-if $launch_web; then
+while $launch_web; do
   echo "Launching: $browser"
   open_browser $browser $download_uri
-else
-  echo "Skipping: User specified -e|--express to skip browser launch"
-fi
-
-if $exit_after_download; then
-  echo "Exiting: User specified -x|--exit"
-  exit 0
-fi
-
-echo "Waiting for user to proceed.  Ready (press any key)"
-read user_input
+  if $exit_after_download; then
+    echo "Exiting: User specified -x|--exit"
+    exit 0
+  else
+    echo "Waiting for user to proceed:"
+    echo "  Enter \"r\" to reload browser,"
+    echo "  Enter \"q\" to quit,"
+    echo "  <or> press any key to continue"
+    read user_input
+    case $user_input in
+      "r") 
+        launch_web=true
+        ;;
+      "q")
+        exit 0
+        ;;
+      *)
+        launch_web=false
+        ;;
+      esac
+  fi
+done
 
 #dataurlstring=read_data $SQLITE_DIR $browser
 #echo $dataurlstring
