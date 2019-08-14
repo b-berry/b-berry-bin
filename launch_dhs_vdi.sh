@@ -10,7 +10,8 @@ LAUNCH_DHS_URI='https://quickconnect.dhs.gov'
 SQLITE_DIR="$HOME/Library/Preferences/com.apple.LaunchServices.QuarantineEventsV2"
 
 function usage() {
-  echo "$0 [-b|--browser] [-d|--download-dir] [-t|--download-type] [-u|--url] [-x|--express] [-h|--help]"
+  echo "$0 [-b|--browser] [-d|--download-dir] [-e|--exit] [-k|--kill]"
+  echo "                    [-t|--download-type] [-u|--url] [-x|--express] [-h|--help]"
   exit 0
 }
 
@@ -54,6 +55,11 @@ while [[ $# -gt 0 ]]; do
       shift
       shift
       ;;
+    -k|--kill)
+      user_kill=true
+      shift
+      shift
+      ;;
     -t|--download-type)
       user_download_type="$2"
       shift
@@ -82,9 +88,18 @@ set -- "${options[@]}"
 browser="${user_browser:-Safari}"
 download_dir="${user_download_dir:-$DOWNLOAD_DIR}"
 download_type="${user_download_type:-$DOWNLOAD_TYPE}"
+kill_citrix="${user_kill:-false}"
 launch_web="${user_launch_web:-true}"
 exit_after_download="${user_exit_after_download:-false}"
 download_uri="${user_download_uri:-$LAUNCH_DHS_URI}"
+
+if $kill_citrix; then
+  cmd="pkill -9 Citrix\ Viewer"
+  echo "User specified kill option"
+  echo "Attempting kill cmd: $cmd"
+  eval $cmd && \
+  exit 0
+fi
 
 while $launch_web; do
   echo "Launching: $browser"
